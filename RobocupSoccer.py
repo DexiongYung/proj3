@@ -2,6 +2,7 @@ import numpy as np
 
 legal_actions = [[-1, 0], [0, 1], [1, 0], [0, -1], [0, 0]]
 
+
 class RobocupSoccer:
     def __init__(self):
         self.pos = [np.array([0, 2]), np.array([0, 1])]
