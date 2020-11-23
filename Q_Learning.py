@@ -1,7 +1,7 @@
 import numpy as np
 from RobocupSoccer import RobocupSoccer
 
-def Q_learning(no_steps = int(1e6)):
+def Q_learning(no_steps = int(1e5)):
 
     # Take action with epsilon-greedy r
     def generate_action(Q, state, epsilon):

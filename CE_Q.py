@@ -6,7 +6,7 @@ import cvxpy as cp
 import time
 
 
-def CE_Q(no_steps=int(10000)):
+def CE_Q(no_steps=int(1e5)):
 
     # Take action with epsilon-greedy
     def take_action(Pi, state, i):
@@ -155,6 +155,3 @@ def CE_Q(no_steps=int(10000)):
             error_list.append(np.abs(after - before))
 
     return error_list, Q_1, Q_2, V_1, V_2, Pi
-
-ce_q_errors, Q_1_ce, Q_2_ce, V_1_ce, V_2_ce, Pi_ce = CE_Q()
-error_plot(np.array(ce_q_errors), 'CE-Q')

@@ -2,7 +2,7 @@ import numpy as np
 import cvxpy as cp
 from RobocupSoccer import RobocupSoccer
 
-def Friend_Q(no_steps=int(1e6)):
+def Friend_Q(no_steps=int(1e5)):
 
     # Take action with epsilon-greedy r
     def generate_action(Q, state, epsilon):

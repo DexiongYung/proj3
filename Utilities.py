@@ -19,6 +19,5 @@ def error_plot(errors, title):
     plt.ylabel('Q-value Difference')
     plt.ticklabel_format(style='sci', axis='x',
                          scilimits=(0,0), useMathText=True)
-    plt.show()
     plt.savefig(f"Plots/title")
     plt.close()

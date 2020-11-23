@@ -4,7 +4,7 @@ import cvxpy as cp
 import time
 from Utilities import *
 
-def Foe_Q(no_steps=int(1000)):
+def Foe_Q(no_steps=int(1e5)):
 
     # Take action with epsilon-greedy
     def generate_action(pi, state, i):
