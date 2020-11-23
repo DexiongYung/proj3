@@ -46,28 +46,27 @@ def Foe_Q(no_steps, args):
 
     errors_list = []
 
-    np.random.seed(1234)
+    np.random.seed(args.seed)
 
     start_time = time.time()
     i = 0
 
     while i < no_steps:
-        soccer = RobocupSoccer()
-        state = [soccer.pos[0][0] * 4 + soccer.pos[0][1],
-                 soccer.pos[1][0] * 4 + soccer.pos[1][1], soccer.ball]
+        env = RobocupSoccer()
+        state = init(env)
         done = False
         while not done:
-            if i % 1000 == 0:
+            if i % args.print == 0:
                 print('\rstep {}\t Time: {:.2f} \t Percentage: {:.2f}% \t Alpha: {:.3f}'.format(
                     i, time.time() - start_time, i*100/no_steps, alpha), end="")
             i += 1
 
-            before = Q_1[2][1][1][4][2]
+            Q_t = Q_1[2][1][1][4][2]
 
             actions = [generate_action(
                 Pi_1, state, i), generate_action(Pi_2, state, i)]
 
-            state_prime, rewards, done = soccer.move(actions)
+            state_prime, rewards, done = env.move(actions)
 
             Q_1[state[0]][state[1]][state[2]][actions[1]][actions[0]] = (
                 1 - alpha) * Q_1[state[0]][state[1]][state[2]][actions[1]][actions[0]] + alpha * (rewards[0] + gamma * V_1[state_prime[0]][state_prime[1]][state_prime[2]])
@@ -84,8 +83,8 @@ def Foe_Q(no_steps, args):
             V_2[state[0]][state[1]][state[2]] = val
             state = state_prime
 
-            after = Q_1[2][1][1][4][2]
-            errors_list.append(np.abs(after - before))
+            Q_tp1 = Q_1[2][1][1][4][2]
+            errors_list.append(np.abs(Q_tp1 - Q_t))
 
             alpha = alpha_decay ** i
 

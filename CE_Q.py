@@ -20,7 +20,7 @@ def CE_Q(no_steps, args):
                 np.arange(25), 1, p=Pi[state[0]][state[1]][state[2]].reshape(25))
             return np.array([index // 5, index % 5]).reshape(2)
 
-    def solve_ce(Q_1, Q_2, state):
+    def solve(Q_1, Q_2, state):
         Q_states = Q_1[state[0]][state[1]][state[2]]
         s = block_diag(Q_states - Q_states[0, :], Q_states - Q_states[1, :], Q_states -
                        Q_states[2, :], Q_states - Q_states[3, :], Q_states - Q_states[4, :])
@@ -41,7 +41,7 @@ def CE_Q(no_steps, args):
         x = cp.Variable(num_vars)
         G = np.append(np.append(parameters_1, parameters_2,
                                 axis=0), -np.eye(25), axis=0)
-        h = np.zeros(65) * 0.0
+        h = np.zeros(65).astype(float)
         A = np.ones((1, 25))
 
         objective = cp.Minimize(cp.sum(c @ x))
@@ -50,20 +50,14 @@ def CE_Q(no_steps, args):
         constraints.append(G @ x <= h)
         constraints.append(A @ x == 1)
 
-        try:
-            prob = cp.Problem(objective, constraints)
-            result = prob.solve()
-            if x.value is not None:
-                prob = np.abs(np.array(x.value).reshape(
-                    (5, 5))) / sum(np.abs(x.value))
-                val_1 = np.sum(prob * Q_1[state[0]][state[1]][state[2]])
-                val_2 = np.sum(prob * Q_2[state[0]][state[1]][state[2]].T)
-            else:
-                prob = None
-                val_1 = None
-                val_2 = None
-        except:
-            print("error!!")
+        prob = cp.Problem(objective, constraints)
+        result = prob.solve()
+        if x.value is not None:
+            prob = np.abs(np.array(x.value).reshape(
+                (5, 5))) / sum(np.abs(x.value))
+            val_1 = np.sum(prob * Q_1[state[0]][state[1]][state[2]])
+            val_2 = np.sum(prob * Q_2[state[0]][state[1]][state[2]].T)
+        else:
             prob = None
             val_1 = None
             val_2 = None
@@ -81,7 +75,7 @@ def CE_Q(no_steps, args):
 
     Pi = np.ones((8, 8, 2, 5, 5)) * 1/25
 
-    error_list = []
+    errors = []
 
     np.random.seed(args.seed)
 
@@ -89,18 +83,15 @@ def CE_Q(no_steps, args):
     i = 0
     while i < no_steps:
         env = RobocupSoccer()
-        state = [env.pos[0][0] * 4 + env.pos[0][1],
-                 env.pos[1][0] * 4 + env.pos[1][1], env.ball]
+        state = init(env)
         done = False
         j = 0
         while not done and j <= 100:
-            if i % 1000 == 0:
+            if i % args.print == 0:
                 print('\rstep {}\t Time: {:.2f} \t Percentage: {:.2f}% \t Alpha: {:.3f}'.format(
                     i, time.time() - start_time, i*100/no_steps, alpha), end="")
 
-            i, j = i+1, j+1
-
-            before = Q_1[2][1][1][2][4]
+            Q_t = Q_1[2][1][1][2][4]
 
             actions = take_action(Pi, state, i)
 
@@ -112,15 +103,16 @@ def CE_Q(no_steps, args):
 
             Q_2[state[0]][state[1]][state[2]][actions[1]][actions[0]] = (
                 1 - alpha) * Q_2[state[0]][state[1]][state[2]][actions[1]][actions[0]] + alpha * (rewards[1] + gamma * V_2[state_prime[0]][state_prime[1]][state_prime[2]].T)
-            prob, val_1, val_2 = solve_ce(Q_1, Q_2, state)
+            prob, val_1, val_2 = solve(Q_1, Q_2, state)
 
             if prob is not None:
                 Pi[state[0]][state[1]][state[2]] = prob
                 V_1[state[0]][state[1]][state[2]] = val_1
                 V_2[state[0]][state[1]][state[2]] = val_2
+            
             state = state_prime
+            Q_tp1 = Q_1[2][1][1][2][4]
+            errors.append(np.abs(Q_tp1 - Q_t))
+            i, j = i+1, j+1
 
-            after = Q_1[2][1][1][2][4]
-            error_list.append(np.abs(after - before))
-
-    return error_list, Q_1, Q_2, V_1, V_2, Pi
+    return errors, Q_1, Q_2, V_1, V_2, Pi

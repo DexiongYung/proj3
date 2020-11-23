@@ -1,6 +1,6 @@
 import numpy as np
 
-legal_actions = [[-1, 0], [0, 1], [1, 0], [0, -1], [0, 0]]
+LEGAL_ACTIONS = [[-1, 0], [0, 1], [1, 0], [0, -1], [0, 0]]
 
 
 class RobocupSoccer:
@@ -10,76 +10,49 @@ class RobocupSoccer:
         self.goal = [0, 3]
 
     def move(self, actions):
-        # players action executed in random order
-        # mover_first as the index 0 or 1
-        # index 0 is player A, index 1 is player B
-        mover_first = np.random.randint(2, size=1)[0]
-        mover_second = 1 - mover_first
-
-        # copy of current pos
+        first = np.random.randint(2, size=1)[0]
+        second = 1 - first
         new_pos = self.pos.copy()
-
-        # scores shows the reward for player A and player B
         scores = np.array([0, 0])
-
-        # init termination status of the game
         is_done = False
 
-        # check whether the received action is valid
         if actions[0] not in range(0, 5) or actions[1] not in range(0, 5):
-            print('Invalid Action, actions shall be in [0,1,2,3,4]')
-            return [self.pos[0][0] * 4 + self.pos[0][1], self.pos[1][0] * 4 + self.pos[1][1], self.ball], scores, is_done
+            invalid_player = 1 if actions[0] not in range(0, 5) else 0
+            bad_action = actions[0] if actions[0] not in range(
+                0, 5) else actions[1]
+            raise Exception(
+                f'Player {invalid_player} has made an invalid action: {bad_action}')
         else:
-            # moving the first player
-            new_pos[mover_first] = self.pos[mover_first] + \
-                legal_actions[actions[mover_first]]
+            new_pos[first] = self.pos[first] + \
+                LEGAL_ACTIONS[actions[first]]
 
-            # check collision, 1st mover collides with 2nd mover after moving
-            if (new_pos[mover_first] == self.pos[mover_second]).all():
-                # if 1st mover possess ball, the ball is lost to 2nd mover
-                if self.ball == mover_first:
-                    self.ball = mover_second
+            if (new_pos[first] == self.pos[second]).all():
+                if self.ball == first:
+                    self.ball = second
 
-            # no collision, update 1st mover's pos
-            elif new_pos[mover_first][0] in range(0, 2) and new_pos[mover_first][1] in range(0, 4):
-                self.pos[mover_first] = new_pos[mover_first]
-
-                # if scored for player himself
-                # Player scored
-                if self.pos[mover_first][1] == self.goal[mover_first] and self.ball == mover_first:
-                    scores = ([1, -1][mover_first]) * np.array([100, -100])
+            elif new_pos[first][0] in range(0, 2) and new_pos[first][1] in range(0, 4):
+                self.pos[first] = new_pos[first]
+                if self.pos[first][1] == self.goal[first] and self.ball == first:
+                    scores = ([1, -1][first]) * np.array([100, -100])
                     is_done = True
                     return [self.pos[0][0] * 4 + self.pos[0][1], self.pos[1][0] * 4 + self.pos[1][1], self.ball], scores, is_done
-
-                # if scored for the opponent
-                elif self.pos[mover_first][1] == self.goal[mover_second] and self.ball == mover_first:
-                    scores = ([1, -1][mover_first]) * np.array([-100, 100])
+                elif self.pos[first][1] == self.goal[second] and self.ball == first:
+                    scores = ([1, -1][first]) * np.array([-100, 100])
                     is_done = True
                     return [self.pos[0][0] * 4 + self.pos[0][1], self.pos[1][0] * 4 + self.pos[1][1], self.ball], scores, is_done
-
-            # moving the second player
-            new_pos[mover_second] = self.pos[mover_second] + \
-                legal_actions[actions[mover_second]]
-
-            # check collision, 2nd mover collides with 1st mover after moving
-            if (new_pos[mover_second] == self.pos[mover_first]).all():  # Collide
-                # if 2nd mover possess ball, the ball is lost to 1st mover
-                if self.ball == mover_second:
-                    self.ball = mover_first
-
-            # no collision, update 2nd mover's pos
-            elif new_pos[mover_second][0] in range(0, 2) and new_pos[mover_second][1] in range(0, 4):
-                self.pos[mover_second] = new_pos[mover_second]
-
-                # if scored for player himself
-                if self.pos[mover_second][1] == self.goal[mover_second] and self.ball == mover_second:
-                    scores = ([1, -1][mover_second]) * np.array([100, -100])
+            new_pos[second] = self.pos[second] + \
+                LEGAL_ACTIONS[actions[second]]
+            if (new_pos[second] == self.pos[first]).all():
+                if self.ball == second:
+                    self.ball = first
+            elif new_pos[second][0] in range(0, 2) and new_pos[second][1] in range(0, 4):
+                self.pos[second] = new_pos[second]
+                if self.pos[second][1] == self.goal[second] and self.ball == second:
+                    scores = ([1, -1][second]) * np.array([100, -100])
                     is_done = True
                     return [self.pos[0][0] * 4 + self.pos[0][1], self.pos[1][0] * 4 + self.pos[1][1], self.ball], scores, is_done
-
-                # if scored for the opponent
-                elif self.pos[mover_second][1] == self.goal[mover_first] and self.ball == mover_second:
-                    scores = np.array([-100, 100]) * [1, -1][mover_second]
+                elif self.pos[second][1] == self.goal[first] and self.ball == second:
+                    scores = np.array([-100, 100]) * [1, -1][second]
                     is_done = True
                     return [self.pos[0][0] * 4 + self.pos[0][1], self.pos[1][0] * 4 + self.pos[1][1], self.ball], scores, is_done
 

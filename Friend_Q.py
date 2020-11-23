@@ -24,7 +24,7 @@ def Friend_Q(no_steps, args):
     alpha_min = args.alpha_min
     alpha_decay = args.alpha_decay
 
-    error_list = []
+    errors = []
 
     np.random.seed(args.seed)
 
@@ -34,15 +34,14 @@ def Friend_Q(no_steps, args):
 
     while i < no_steps:
         env = RobocupSoccer()
-        state = [env.pos[0][0] * 4 + env.pos[0][1],
-                 env.pos[1][0] * 4 + env.pos[1][1], env.ball]
+        state = init(env)
 
         while True:
-            if i % 1000 == 0:
+            if i % args.print == 0:
                 print('\rstep {}\t Time: {:.2f} \t Percentage: {:.2f}% \t Alpha: {:.3f}'.format(
                     i, time.time() - start_time, i*100/no_steps, alpha), end="")
 
-            before = Q_1[2][1][1][4][2]
+            Q_t = Q_1[2][1][1][4][2]
 
             actions = [generate_action(
                 Q_1, state, epsilon), generate_action(Q_2, state, epsilon)]
@@ -58,8 +57,8 @@ def Friend_Q(no_steps, args):
 
                 Q_2[state[0]][state[1]][state[2]][actions[0]][actions[1]] = Q_2[state[0]][state[1]][state[2]][actions[0]
                                                                                                               ][actions[1]] + alpha * (rewards[1] - Q_2[state[0]][state[1]][state[2]][actions[0]][actions[1]])
-                after = Q_1[2][1][1][4][2]
-                error_list.append(abs(after-before))
+                Q_tp1 = Q_1[2][1][1][4][2]
+                errors.append(abs(Q_tp1-Q_t))
                 break
 
             else:
@@ -72,10 +71,10 @@ def Friend_Q(no_steps, args):
                                                  [state_prime[2]]) - Q_2[state[0]][state[1]][state[2]][actions[0]][actions[1]])
                 state = state_prime
 
-                after = Q_1[2][1][1][4][2]
-                error_list.append(abs(after-before))
+                Q_tp1 = Q_1[2][1][1][4][2]
+                errors.append(abs(Q_tp1-Q_t))
 
             epsilon *= epsilon_decay
             epsilon = max(epsilon_min, epsilon)
 
-    return error_list, Q_1, Q_2
+    return errors, Q_1, Q_2
